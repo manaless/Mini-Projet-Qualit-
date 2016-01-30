@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 28 janv. 2016 21:55:08 by Hibernate Tools 3.4.0.CR1 -->
+<hibernate-mapping>
+    <class name="domaine.Compte" table="compte" catalog="prj">
+        <id name="login" type="string">
+            <column name="login" length="50" />
+            <generator class="assigned" />
+        </id>
+        <property name="password" type="string">
+            <column name="password" length="50" not-null="true" />
+        </property>
+        <property name="enable" type="byte">
+            <column name="enable" not-null="true" />
+        </property>
+        <set name="clients" table="client" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="login" length="50" not-null="true" />
+            </key>
+            <one-to-many class="domaine.Client" />
+        </set>
+        <set name="roles" table="role" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="login" length="50" not-null="true" />
+            </key>
+            <one-to-many class="domaine.Role" />
+        </set>
+    </class>
+</hibernate-mapping>

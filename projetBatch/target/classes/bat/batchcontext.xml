@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+
+
+
+	<context:annotation-config />
+
+
+	<context:component-scan base-package="dao,bat,domaine" />
+
+
+
+	<bean id="transactionReaderCSV" class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="resource" value="input/transaction" />
+		<property name="lineMapper">
+			<bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean
+						class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="delimiter" value="," />
+						<property name="names" value="idTransaction,type,Client.idClient,montant,date" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean
+						class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper">
+						<property name="targetType" value="domaine.Transaction" />
+
+					</bean>
+
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+
+
+	<!-- <bean id="sessionFactory" -->
+	<!-- class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> -->
+	<!-- <property name="configLocation" value="classpath:hibernate.cfg.xml" -->
+	<!-- /> -->
+	<!-- </bean> -->
+
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+			</props>
+		</property>
+
+		<property name="mappingResources">
+			<list>
+				<value>domaine/Transaction.hbm.xml</value>
+				<value>domaine/Client.hbm.xml</value>
+				<value>domaine/Solde.hbm.xml</value>
+				<value>domaine/Compte.hbm.xml</value>
+				<value>domaine/Role.hbm.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost:3306/prj" />
+		<property name="username" value="root" />
+		<property name="password" value="" />
+	</bean>
+
+
+
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+
+	<job id="importTransactions" xmlns="http://www.springframework.org/schema/batch">
+		<step id="readWriteTransaction">
+			<tasklet>
+				<chunk reader="transactionReaderCSV" processor="transactionProcessor"
+					writer="transactionWriter" commit-interval="2" />
+			</tasklet>
+		</step>
+	</job>
+
+
+
+<!-- 	<task:scheduled-tasks> -->
+<!-- 	<task:scheduled ref="batchLauncher" method="run" -->
+<!-- 	cron=" * * * * * * " /> -->
+<!-- 	</task:scheduled-tasks> -->
+<!-- 	<tx:annotation-driven /> -->
+
+
+
+</beans>
